@@ -1,4 +1,4 @@
-package com.limboc.archers;
+package com.limboc.archers.receiver;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.util.Log;
+
+import com.limboc.archers.R;
 
 import java.util.List;
 
@@ -19,7 +21,7 @@ public class AlarmReceiver extends BroadcastReceiver
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d(TAG,"I am AlarmReceiver, I receive the message");
-        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage("com.alibaba.android.rimet");
+        Intent launchIntent = context.getPackageManager().getLaunchIntentForPackage(context.getString(R.string.dingding_pkg_name));
         launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         if(isIntentAvailable(context, launchIntent)){
             context.startActivity(launchIntent);

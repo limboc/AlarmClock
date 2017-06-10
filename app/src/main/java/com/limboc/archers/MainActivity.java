@@ -1,25 +1,38 @@
 package com.limboc.archers;
 
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+import android.app.ActivityManager;
 import android.app.TimePickerDialog;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.support.v7.app.AppCompatActivity;
-import android.view.Menu;
-import android.view.MenuItem;
+import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.TimePicker;
+
+import com.limboc.archers.service.AlarmService;
+import com.limboc.archers.utils.SpUtils;
+
 import java.util.Calendar;
+import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
+import static com.limboc.archers.utils.Constants.DEFAULT_HOUR;
+import static com.limboc.archers.utils.Constants.DEFAULT_MINUTE;
 
 public class MainActivity extends AppCompatActivity {
 
     private Context context;
+    private Switch aSwitch;
     private TextView tvTime;
-    private static final int DEFAULT_HOUR = 8, DEFAULT_MINUTE = 40;
-    private final String MYACTION = "android.intent.action.open.dingding";
-    private AlarmManager am;
+    private IAlarmAidlInterface iAlarmAidlInterface;
+    private long alarmTime;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,99 +40,137 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         this.context = this;
         tvTime = (TextView) findViewById(R.id.tv_time);
-        long alarmTime = SpUtils.getAlarmTime(context);
+        aSwitch = (Switch) findViewById(R.id.aSwitch);
+        init();
+    }
+
+
+    private void init() {
+        alarmTime = SpUtils.getAlarmTime();
+        if (isRunning(AlarmService.class.getName())) {
+            aSwitch.setText(R.string.service_off);
+            aSwitch.setChecked(true);
+            startService();
+        }
+        aSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                if (b) {
+                    aSwitch.setText(R.string.service_off);
+                    startService();
+                } else {
+                    aSwitch.setText(R.string.service_on);
+                    tvTime.setText("");
+                    SpUtils.clear();
+                    alarmTime = 0;
+                    stopService();
+                }
+            }
+        });
+    }
+
+    private void showAlarmTime(int hour, int minute) {
+        StringBuilder sb = new StringBuilder();
+        if (hour < 10) {
+            sb.append("0");
+        }
+        sb.append(hour + ":");
+        if (minute < 10) {
+            sb.append("0");
+        }
+        sb.append(minute);
+        tvTime.setText(sb.toString());
+    }
+
+    private void startService() {
+        Intent intent = new Intent(this, AlarmService.class);
+        startService(intent);
+        bindService(intent, serviceConnection, BIND_AUTO_CREATE);
         if (alarmTime == 0) {
-            tvTime.setText(DEFAULT_HOUR + ":" + DEFAULT_MINUTE);
-            setAlarm(DEFAULT_HOUR, DEFAULT_MINUTE);
+            showAlarmTime(DEFAULT_HOUR, DEFAULT_MINUTE);
         } else {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(alarmTime);
-            tvTime.setText(calendar.get(Calendar.HOUR_OF_DAY) + ":" + calendar.get(Calendar.MINUTE));
-            setAlarm(Calendar.HOUR_OF_DAY, calendar.get(Calendar.MINUTE));
+            showAlarmTime(calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         }
+    }
 
+    private void stopService() {
+        if (serviceConnection != null && iAlarmAidlInterface != null) {
+            unbindService(serviceConnection);
+        }
+        if (isRunning(AlarmService.class.getName())) {
+            stopService(new Intent(this, AlarmService.class));
+        }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_activity_actions, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        switch (id) {
-            case R.id.action_settings:
-                setAlarmtTime();
-                break;
-            default:
-                break;
+    protected void onDestroy() {
+        super.onDestroy();
+        if (serviceConnection != null && iAlarmAidlInterface != null) {
+            unbindService(serviceConnection);
         }
-        return super.onOptionsItemSelected(item);
     }
 
-
-    private void setAlarmtTime() {
+    public void setAlarmtTime(View view) {
         final Calendar calendar = Calendar.getInstance();
         new TimePickerDialog(context,
                 new TimePickerDialog.OnTimeSetListener() {
                     @Override
                     public void onTimeSet(TimePicker view, int hour, int minute) {
-                        tvTime.setText(hour + ":" + minute);
-                        setAlarm(hour, minute);
+                        showAlarmTime(hour, minute);
                         Calendar cal = Calendar.getInstance();
                         cal.set(Calendar.HOUR_OF_DAY, hour);
                         cal.set(Calendar.MINUTE, minute);
                         cal.set(Calendar.SECOND, 0);
-                        SpUtils.setAlarmTime(context, cal.getTimeInMillis());
+                        SpUtils.setAlarmTime(cal.getTimeInMillis());
+                        setCheckInTime(cal.getTimeInMillis());
                     }
                 }, calendar.get(Calendar.HOUR_OF_DAY),
                 calendar.get(Calendar.MINUTE), true).show();
     }
 
+    private Executor execute = Executors.newCachedThreadPool();
 
-    private void setAlarm(int hour, int minute) {
-        am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        Calendar calendar = Calendar.getInstance();
-        long intervalMillis = 0;
-        calendar.set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get
-                (Calendar.DAY_OF_MONTH), hour, minute, 0);
-        Intent intent = new Intent(MYACTION);
-        PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, PendingIntent
-                .FLAG_CANCEL_CURRENT);
-        am.setWindow(AlarmManager.RTC_WAKEUP, calMethod(0, calendar.getTimeInMillis()),
-                intervalMillis, sender);
+    private void setCheckInTime(final long millis) {
+        execute.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (iAlarmAidlInterface != null)
+                        iAlarmAidlInterface.setCheckInTime(millis);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 
-    private long calMethod(int weekflag, long dateTime) {
-        long time = 0;
-        if (weekflag != 0) {
-            Calendar c = Calendar.getInstance();
-            int week = getDayOfWeek(c.get(Calendar.DAY_OF_WEEK));
-            if (weekflag == week) {
-                if (dateTime > System.currentTimeMillis()) {
-                    time = dateTime;
-                } else {
-                    time = dateTime + 7 * 24 * 3600 * 1000;
-                }
-            } else if (weekflag > week) {
-                time = dateTime + (weekflag - week) * 24 * 3600 * 1000;
-            } else if (weekflag < week) {
-                time = dateTime + (weekflag - week + 7) * 24 * 3600 * 1000;
-            }
-        } else {
-            if (dateTime > System.currentTimeMillis()) {
-                time = dateTime;
-            } else {
-                time = dateTime + 24 * 3600 * 1000;
+
+    private boolean isRunning(String className) {
+
+        boolean tag = false;
+        android.app.ActivityManager mActivityManager = (android.app.ActivityManager) this.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningServiceInfo> mRunningTaskInfos = mActivityManager.getRunningServices(150);
+        for (int i = 0; i < mRunningTaskInfos.size(); i++) {
+            if (mRunningTaskInfos.get(i).service.getClassName().equals(className)) {
+                return true;
             }
         }
-        return time;
+        return tag;
+
     }
 
-    private int getDayOfWeek(int calendarWeek) {
-        return (calendarWeek == 1 ? 7 : calendarWeek - 1);
-    }
+    private ServiceConnection serviceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
+            iAlarmAidlInterface = IAlarmAidlInterface.Stub.asInterface(iBinder);
+            setCheckInTime(alarmTime);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName componentName) {
+        }
+    };
 
 }

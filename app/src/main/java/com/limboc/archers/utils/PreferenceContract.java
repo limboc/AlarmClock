@@ -1,4 +1,4 @@
-package com.limboc.archers;
+package com.limboc.archers.utils;
 
 public class PreferenceContract {
 

@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">Archers</string>
+    <string name="dingding_pkg_name">com.alibaba.android.rimet</string>
+    <string name="app_description">打卡呀打卡O(∩_∩)O</string>
+    <string name="service_off">关闭插件</string>
+    <string name="service_on">开启插件</string>
+    <string name="turn_on_toast">点击「Archers」</string>
+    <string name="turn_on_error_toast">遇到一些问题,请手动打开系统设置>无障碍服务>Archers(ฅ´ω`ฅ)</string>
 </resources>
