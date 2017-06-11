@@ -24,6 +24,14 @@ public class AlarmUtils {
                 intervalMillis, sender);
     }
 
+    public static void cancelAlarm(Context context){
+        AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(Constants.AlarmReceiverActionName);
+        PendingIntent sender = PendingIntent.getBroadcast(context, 0, intent, PendingIntent
+                .FLAG_CANCEL_CURRENT);
+        am.cancel(sender);
+    }
+
     private static long calMethod(int weekflag, long dateTime) {
         long time = 0;
         if (weekflag != 0) {
