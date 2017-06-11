@@ -48,6 +48,7 @@ public class AlarmService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        AlarmUtils.cancelAlarm(this);
         return super.onUnbind(intent);
     }
 
@@ -69,6 +70,5 @@ public class AlarmService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        AlarmUtils.cancelAlarm(this);
     }
 }
