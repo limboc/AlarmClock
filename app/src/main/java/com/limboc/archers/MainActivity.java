@@ -96,8 +96,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void stopService() {
-        if (serviceConnection != null && iAlarmAidlInterface != null) {
+        if (serviceConnection != null && isBind) {
             unbindService(serviceConnection);
+            isBind = false;
         }
         if (isRunning(AlarmService.class.getName())) {
             stopService(new Intent(this, AlarmService.class));
@@ -107,8 +108,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (serviceConnection != null && iAlarmAidlInterface != null) {
+        if (serviceConnection != null && isBind) {
             unbindService(serviceConnection);
+            isBind = false;
         }
     }
 
@@ -161,10 +163,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private boolean isBind = false;
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
             iAlarmAidlInterface = IAlarmAidlInterface.Stub.asInterface(iBinder);
+            isBind = true;
             setCheckInTime(alarmTime);
         }
 
