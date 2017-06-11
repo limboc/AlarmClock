@@ -132,8 +132,7 @@ public class MainActivity extends AppCompatActivity {
                 calendar.get(Calendar.MINUTE), true).show();
     }
 
-    private Executor execute = Executors.newCachedThreadPool();
-
+    Executor execute = Executors.newCachedThreadPool();
     private void setCheckInTime(final long millis) {
         execute.execute(new Runnable() {
             @Override

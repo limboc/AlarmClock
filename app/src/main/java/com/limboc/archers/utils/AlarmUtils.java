@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+
 import java.util.Calendar;
 
 /**
@@ -11,6 +12,8 @@ import java.util.Calendar;
  */
 
 public class AlarmUtils {
+    private static String TAG = "achers";
+
     public static void setHourMinute(Context context, int hour, int minute) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Calendar calendar = Calendar.getInstance();

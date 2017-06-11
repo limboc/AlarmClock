@@ -1,6 +1,5 @@
 package com.limboc.archers.service;
 
-import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -8,9 +7,8 @@ import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import com.limboc.archers.utils.AlarmUtils;
 import com.limboc.archers.IAlarmAidlInterface;
-import com.limboc.archers.utils.Constants;
+import com.limboc.archers.utils.AlarmUtils;
 
 import java.util.Calendar;
 
@@ -38,6 +36,7 @@ public class AlarmService extends Service {
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {
+        Log.d(TAG, "onbind");
         return new IAlarmAidlInterface.Stub(){
             @Override
             public void setCheckInTime(long millis) throws RemoteException {
@@ -48,8 +47,9 @@ public class AlarmService extends Service {
 
     @Override
     public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "unbind");
         AlarmUtils.cancelAlarm(this);
-        return super.onUnbind(intent);
+        return true;
     }
 
 
