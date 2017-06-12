@@ -46,9 +46,15 @@ public class AlarmService extends Service {
     }
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d(TAG, "onDestroy");
+        AlarmUtils.cancelAlarm(this);
+    }
+
+    @Override
     public boolean onUnbind(Intent intent) {
         Log.d(TAG, "unbind");
-        AlarmUtils.cancelAlarm(this);
         return true;
     }
 
@@ -67,8 +73,5 @@ public class AlarmService extends Service {
 
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
+
 }

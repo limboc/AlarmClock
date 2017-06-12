@@ -47,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         alarmTime = SpUtils.getAlarmTime();
-        if (isRunning(AlarmService.class.getName())) {
+        if(alarmTime != 0){
             aSwitch.setText(R.string.service_off);
             aSwitch.setChecked(true);
             startService();
