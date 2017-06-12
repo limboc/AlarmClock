@@ -88,6 +88,11 @@ public class MainActivity extends AppCompatActivity {
         bindService(intent, serviceConnection, BIND_AUTO_CREATE);
         if (alarmTime == 0) {
             showAlarmTime(DEFAULT_HOUR, DEFAULT_MINUTE);
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, DEFAULT_HOUR);
+            cal.set(Calendar.MINUTE, DEFAULT_MINUTE);
+            cal.set(Calendar.SECOND, 0);
+            SpUtils.setAlarmTime(cal.getTimeInMillis());
         } else {
             Calendar calendar = Calendar.getInstance();
             calendar.setTimeInMillis(alarmTime);
