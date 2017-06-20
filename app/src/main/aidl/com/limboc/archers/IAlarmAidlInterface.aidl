@@ -4,4 +4,5 @@ package com.limboc.archers;
 
 interface IAlarmAidlInterface {
     void setCheckInTime(long millis);
+    void stopAlarm();
 }

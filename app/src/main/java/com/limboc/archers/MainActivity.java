@@ -63,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
                     tvTime.setText("");
                     SpUtils.clear();
                     alarmTime = 0;
-                    stopService();
+                    stopAlarm();
                 }
             }
         });
@@ -145,6 +145,20 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     if (iAlarmAidlInterface != null)
                         iAlarmAidlInterface.setCheckInTime(millis);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void stopAlarm() {
+        execute.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    if (iAlarmAidlInterface != null)
+                        iAlarmAidlInterface.stopAlarm();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

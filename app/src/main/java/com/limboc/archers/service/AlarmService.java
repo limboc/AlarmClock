@@ -42,6 +42,12 @@ public class AlarmService extends Service {
             public void setCheckInTime(long millis) throws RemoteException {
                 setAlarm(millis);
             }
+
+            @Override
+            public void stopAlarm() throws RemoteException {
+                Log.d(TAG, "stopAlarm");
+                AlarmUtils.cancelAlarm(AlarmService.this);
+            }
         };
     }
 
@@ -49,7 +55,6 @@ public class AlarmService extends Service {
     public void onDestroy() {
         super.onDestroy();
         Log.d(TAG, "onDestroy");
-        AlarmUtils.cancelAlarm(this);
     }
 
     @Override
